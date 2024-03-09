@@ -8,6 +8,7 @@ use crate::state::Escrow;
 
 #[derive(Accounts)]
 pub struct Make<'info> {
+
     #[account(mut)]
     pub maker : Signer<'info>,
 
@@ -16,6 +17,7 @@ pub struct Make<'info> {
     pub maker_mint : Account<'info,Mint>,
     pub taker_mint : Account<'info,Mint>,
 
+    /// CHECK: This field is unsafe because...
     #[account(seeds = [b"auth"],bump)]
     pub authority: UncheckedAccount<'info>,
     
@@ -59,7 +61,6 @@ impl <'info> Make <'info>{
             vault_bump,
             escrow_bump,
             seed,
-            
         });
         Ok(())
     }

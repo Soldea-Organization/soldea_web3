@@ -7,6 +7,7 @@ use crate::state::Escrow;
 
 #[derive(Accounts)]
 pub struct Take<'info> {
+    /// CHECK: This field is unsafe because...
     pub maker : UncheckedAccount<'info>,
     #[account(mut)]
     pub taker: Signer<'info>,

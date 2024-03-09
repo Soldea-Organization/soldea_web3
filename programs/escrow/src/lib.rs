@@ -6,8 +6,6 @@ pub mod state;
 use contexts::*;
 
 
-
-
 declare_id!("AmY5Fts7Q2EfFoCH1obaqV8sM6qmio9CmsoEmxQ3jYfr");
 
 #[program]
@@ -24,6 +22,7 @@ pub mod escrow {
 
     }
 
+    
     pub fn take(ctx: Context<Take>) -> Result<()> {
         ctx.accounts.close_account();
         ctx.accounts.deposit_to_maker();
