@@ -22,12 +22,19 @@ pub mod escrow {
 
     }
 
-    
+
     pub fn take(ctx: Context<Take>) -> Result<()> {
         ctx.accounts.close_account();
         ctx.accounts.deposit_to_maker();
         Ok(())
 
     }
+
+    pub fn cancel(ctx: Context<Cancel>) -> Result<()> {
+        ctx.accounts.tranfer_from_escrow_to_maker();
+        ctx.accounts.close_accounts();
+        Ok(())
+    }
+
 }
 
