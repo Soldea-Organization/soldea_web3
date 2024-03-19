@@ -4,9 +4,9 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct Escrow{
-    pub maker: Pubkey,
-    pub maker_mint: Pubkey,
-    pub taker_mint: Pubkey,
+    pub entrepreneur: Pubkey,
+    pub entrepreneur_mint: Pubkey,
+    pub investor_mint: Pubkey,
     pub offer_amount: u64,
     pub auth_bump: u8,
     pub vault_bump: u8,

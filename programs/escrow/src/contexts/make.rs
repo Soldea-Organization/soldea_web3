@@ -10,21 +10,21 @@ use crate::state::Escrow;
 pub struct Make<'info> {
 
     #[account(mut)]
-    pub maker : Signer<'info>,
+    pub entrepreneur : Signer<'info>,
 
-    #[account(mut,associated_token::authority= maker,associated_token::mint = maker_mint)]
-    pub maker_ata: Account<'info,TokenAccount>,
-    pub maker_mint : Account<'info,Mint>,
-    pub taker_mint : Account<'info,Mint>,
+    #[account(mut,associated_token::authority= entrepreneur,associated_token::mint = entrepreneur_mint)]
+    pub entrepreneur_ata: Account<'info,TokenAccount>,
+    pub entrepreneur_mint : Account<'info,Mint>,
+    pub investor_mint : Account<'info,Mint>,
 
     /// CHECK: This field is unsafe because...
     #[account(seeds = [b"auth"],bump)]
     pub authority: UncheckedAccount<'info>,
     
-    #[account(init,payer = maker, seeds = [b"vault",escrow.key().as_ref()],bump, token::mint=maker_mint,token::authority = escrow)]
+    #[account(init,payer = entrepreneur, seeds = [b"vault",escrow.key().as_ref()],bump, token::mint=entrepreneur_mint,token::authority = escrow)]
     pub vault: Account<'info,TokenAccount>,
 
-    #[account(init,payer = maker, seeds = [b"escrow",escrow.key().as_ref()],bump,space=Escrow::INIT_SPACE)]
+    #[account(init,payer = entrepreneur, seeds = [b"escrow",escrow.key().as_ref()],bump,space=Escrow::INIT_SPACE)]
     pub escrow :Account<'info,Escrow>,
     pub token_program:Program<'info, Token>,
     pub assosiated_token_program : Program<'info, AssociatedToken>,
@@ -37,9 +37,9 @@ pub struct Make<'info> {
 impl <'info> Make <'info>{
     pub fn transfer_vault(&self, amount: u64) -> Result<()> {
         let accts= Transfer{
-            from:self.maker_ata.to_account_info(),
+            from:self.entrepreneur_ata.to_account_info(),
             to:self.vault.to_account_info(),
-            authority:self.maker.to_account_info(),
+            authority:self.entrepreneur.to_account_info(),
 
         };
 
@@ -53,9 +53,9 @@ impl <'info> Make <'info>{
         vault_bump: u8
         ) -> Result<()>{
         self.escrow.set_inner(Escrow{
-            maker: self.maker.key(),
-            maker_mint: self.maker_mint.key(),
-            taker_mint: self.taker_mint.key(),
+            entrepreneur: self.entrepreneur.key(),
+            entrepreneur_mint: self.entrepreneur_mint.key(),
+            investor_mint: self.investor_mint.key(),
             offer_amount : amount,
             auth_bump ,
             vault_bump,

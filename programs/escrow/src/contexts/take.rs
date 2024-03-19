@@ -8,32 +8,32 @@ use crate::state::Escrow;
 #[derive(Accounts)]
 pub struct Take<'info> {
     /// CHECK: This field is unsafe because...
-    pub maker : UncheckedAccount<'info>,
+    pub entrepreneur : UncheckedAccount<'info>,
     #[account(mut)]
-    pub taker: Signer<'info>,
+    pub investor: Signer<'info>,
 
-    #[account(mut,associated_token::authority= taker, associated_token::mint =taker_mint)]
-    pub taker_ata :  Account<'info,TokenAccount>,
+    #[account(mut,associated_token::authority= investor, associated_token::mint =investor_mint)]
+    pub investor_ata :  Account<'info,TokenAccount>,
 
-    #[account(mut,associated_token::authority= maker, associated_token::mint =taker_mint)]
-    pub maker_receive_ata : Account<'info,TokenAccount>,
+    #[account(mut,associated_token::authority= entrepreneur, associated_token::mint =investor_mint)]
+    pub entrepreneur_receive_ata : Account<'info,TokenAccount>,
 
-    #[account(mut,associated_token::authority= taker, associated_token::mint =maker_mint)]
-    pub taker_receive_ata : Account<'info,TokenAccount>,
+    #[account(mut,associated_token::authority= investor, associated_token::mint =entrepreneur_mint)]
+    pub investor_receive_ata : Account<'info,TokenAccount>,
 
-    pub maker_mint : Account<'info,Mint>,
-    pub taker_mint : Account<'info, Mint>,
+    pub entrepreneur_mint : Account<'info,Mint>,
+    pub investor_mint : Account<'info, Mint>,
 
-    #[account(init,payer = taker, seeds = [b"vault",escrow.key().as_ref()],bump, token::mint=taker_mint,token::authority = escrow)]
+    #[account(init,payer = investor, seeds = [b"vault",escrow.key().as_ref()],bump, token::mint=investor_mint,token::authority = escrow)]
     pub vault : Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        close = maker,
-        has_one = maker,
-        has_one = taker_mint,
-        has_one = maker_mint,
-        seeds =   [b"escrow",maker.key().as_ref(),escrow.seed.to_le_bytes().as_ref()],
+        close = entrepreneur,
+        has_one = entrepreneur,
+        has_one = investor_mint,
+        has_one = entrepreneur_mint,
+        seeds =   [b"escrow",entrepreneur.key().as_ref(),escrow.seed.to_le_bytes().as_ref()],
         bump = escrow.escrow_bump
     )]
 
@@ -46,9 +46,9 @@ pub struct Take<'info> {
 
 
 impl <'info> Take <'info> {
-    pub fn deposit_to_maker(&self) -> Result<()> {
+    pub fn deposit_to_entrepreneur(&self) -> Result<()> {
         // self.escrow.set_inner(Escrow{
-        //     taker_mint: self.taker_mint.key(),
+        //     investor_mint: self.investor_mint.key(),
         //     offer_amount,
         // });
 
@@ -56,31 +56,31 @@ impl <'info> Take <'info> {
     
 
         let transfer_accounts = TransferChecked {
-            from: self.taker_receive_ata.to_account_info(),
-            to: self.maker_receive_ata.to_account_info(),
-            authority: self.taker.to_account_info(),
-            mint: self.taker_mint.to_account_info()
+            from: self.investor_receive_ata.to_account_info(),
+            to: self.entrepreneur_receive_ata.to_account_info(),
+            authority: self.investor.to_account_info(),
+            mint: self.investor_mint.to_account_info()
         };
 
         let cpi_ctx = CpiContext::new(self.token_program.to_account_info(), transfer_accounts);
 
-        transfer_checked(cpi_ctx, self.escrow.offer_amount, self.taker_mint.decimals)
+        transfer_checked(cpi_ctx, self.escrow.offer_amount, self.investor_mint.decimals)
     }
     pub fn close_account(&mut self) ->  Result<()> {
 
         let cpi_accounts= CloseAccount{
             account : self.vault.to_account_info(),
-            destination : self.taker.to_account_info(),
+            destination : self.investor.to_account_info(),
             authority : self.escrow.to_account_info(),
 
         };
 
-        let maker_key = self.maker.key();
+        let entrepreneur_key = self.entrepreneur.key();
         let seed = self.escrow.seed.to_le_bytes();
 
         let seeds: &[&[u8]; 4] = &[
             b"escrow",
-            maker_key.as_ref(),
+            entrepreneur_key.as_ref(),
             seed.as_ref(),
             &[self.escrow.escrow_bump],
         ];
