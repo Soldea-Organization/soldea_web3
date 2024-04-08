@@ -31,19 +31,16 @@ mod crowdfunding {
         let crowdfunding = &mut ctx.accounts.crowdfunding;
 
         // Check if the request is approved by the DAO
-        // DAO'nun onayladığını doğrula
         if !ctx.accounts.dao.is_approved()? {
             return Err(ErrorCode::Unauthorized.into());
         }
 
         // Check if the requested amount is available
-        // Talep edilen miktarın mevcut olup olmadığını kontrol et
         if crowdfunding.total_funds < amount {
             return Err(ErrorCode::InsufficientFunds.into());
         }
 
         // Transfer funds to the entrepreneur
-        // Fonları girişimciye aktar
         token::transfer(ctx.accounts.into(), amount)?;
 
         Ok(())
@@ -80,8 +77,6 @@ pub fn initialize_token(
         // Iterate over investors and transfer tokens based on their investment amount
         for investor in &accounts.investors {
             let token_amount = (investor.investment * equity_percentage as u64) / 100;
-            // Transfer token_amount to investor's token account
-            // Code for transferring tokens goes here...
         }
 
         Ok(())
