@@ -31,22 +31,46 @@ mod crowdfunding {
         let crowdfunding = &mut ctx.accounts.crowdfunding;
 
         // Check if the request is approved by the DAO
-        if *ctx.accounts.dao.key != ctx.accounts.dao_authority.key {
+        // DAO'nun onayladığını doğrula
+        if !ctx.accounts.dao.is_approved()? {
             return Err(ErrorCode::Unauthorized.into());
         }
 
         // Check if the requested amount is available
+        // Talep edilen miktarın mevcut olup olmadığını kontrol et
         if crowdfunding.total_funds < amount {
             return Err(ErrorCode::InsufficientFunds.into());
         }
 
-        
         // Transfer funds to the entrepreneur
+        // Fonları girişimciye aktar
         token::transfer(ctx.accounts.into(), amount)?;
 
         Ok(())
     }
 
+
+
+pub fn initialize_token(
+    ctx: Context<InitializeToken>,
+    name: String,
+    symbol: String,
+    decimals: u8,
+    initial_supply: u64,
+) -> ProgramResult {
+    let cpi_ctx = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        token::instruction::initialize_mint(
+            ctx.accounts.token_mint.to_account_info(),
+            ctx.accounts.authority.to_account_info(),
+            None,
+            decimals,
+        )?,
+        vec![],
+    );
+    token::mint_to(cpi_ctx, initial_supply)?;
+    Ok(())
+}
 
     fn distribute_tokens(accounts: &Initialize, equity_percentage: u8) -> ProgramResult {
         // Calculate the total token supply based on the total funding and equity percentage
@@ -68,17 +92,24 @@ mod crowdfunding {
 }
 
 #[derive(Accounts)]
+pub struct InitializeToken<'info> {
+    #[account(init, payer = user, space = 8 + 8)]
+    pub token_mint: Account<'info, Mint>,
+    pub authority: AccountInfo<'info>,
+    pub system_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
 pub struct Withdraw<'info> {
     #[account(mut)]
     pub crowdfunding: ProgramAccount<'info, Crowdfunding>,
     #[account(signer)]
-    pub dao_authority: AccountInfo<'info>,
     pub dao: AccountInfo<'info>,
+    pub dao_state: AccountInfo<'info>,
     #[account(mut)]
     pub transfer_to_entrepreneur: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
 }
-
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(init, payer = user, space = 8 + 8)]
@@ -104,6 +135,13 @@ pub struct Withdraw<'info> {
     pub transfer_to_entrepreneur: Transfer<'info, TokenAccount<'info>>,
 }
 
+impl<'info> Withdraw<'info> {
+    fn is_approved(&self) -> ProgramResult<bool> {
+        let dao_data = &self.dao_state.data.borrow()?;
+        let is_approved = dao_data[0]; // Assuming the first byte represents the approval status
+        Ok(is_approved != 0)
+    }
+}
 
 #[account]
 pub struct Crowdfunding {
@@ -123,5 +161,9 @@ pub enum ErrorCode {
     #[msg("Insufficient funds")]
     InsufficientFunds,
 }
+
+
+
+
 
 
